@@ -22,6 +22,7 @@ import VolunteerPage from './pages/VolunteerPage';
 import FeedbackPage from './pages/FeedbackPage';
 import VolunteerChoicePage from './pages/VolunteerChoicePage';
 import FullVerificationPage from './pages/FullVerificationPage';
+import ChatPage from './pages/ChatPage';
 import InstallPWAPrompt from './components/common/InstallPWAPrompt';
 import { Loader2 } from 'lucide-react';
 
@@ -40,7 +41,7 @@ export default function App() {
           <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg animate-pulse-glow">
             <Loader2 className="h-7 w-7 animate-spin" />
           </div>
-          <p className="text-sm text-muted-foreground">Loading LocalWork...</p>
+          <p className="text-sm text-muted-foreground">Loading Towntask...</p>
         </div>
       </div>
     );
@@ -143,6 +144,8 @@ export default function App() {
         );
       case ROUTES.FEEDBACK:
         return <FeedbackPage />;
+      case ROUTES.CHAT:
+        return <ChatPage applicationId={params.id || ''} />;
       default:
         return <NotFoundPage />;
     }

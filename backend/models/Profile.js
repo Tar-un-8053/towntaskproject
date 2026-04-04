@@ -6,6 +6,7 @@ const profileSchema = new mongoose.Schema({
   email: { type: String },
   phone: { type: String, index: true },
   area: { type: String },
+  city: { type: String, default: '' },
   bio: { type: String, default: '' },
   profilePhoto: { type: String, default: '' }, // URL to profile image
   profileType: { type: String, enum: ['provider', 'worker'], default: 'worker' },
@@ -51,5 +52,7 @@ const profileSchema = new mongoose.Schema({
 // Geo index for location-based queries
 profileSchema.index({ location: '2dsphere' });
 profileSchema.index({ skills: 1 });
+profileSchema.index({ city: 1 });
+profileSchema.index({ city: 1, skills: 1 });
 
 module.exports = mongoose.model('Profile', profileSchema);

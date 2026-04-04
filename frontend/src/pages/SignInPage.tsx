@@ -4,8 +4,9 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Loader2, ArrowLeft, Phone, Shield, Lock, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowLeft, Phone, Shield, Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { authApi } from '../services/api';
+import { toast } from 'react-toastify';
 
 interface SignInPageProps {
   onSuccess: (data: { userId: string; token: string; profile: any }) => void;
@@ -18,6 +19,7 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [devOtp, setDevOtp] = useState('');
+  const [emailPreviewUrl, setEmailPreviewUrl] = useState('');
   const [sentTo, setSentTo] = useState<{ phone?: string; email?: string } | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -35,10 +37,13 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
       const res = await authApi.signin({ phone });
       setHasPassword(res.hasPassword || false);
       setDevOtp(res.otp || '');
+      setEmailPreviewUrl(res.emailPreviewUrl || '');
       if (res.sentTo) setSentTo(res.sentTo);
       setStep('otp');
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP');
+      const message = err.message || 'Failed to send OTP';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -53,10 +58,13 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
     try {
       const res = await authApi.signinWithPassword({ phone, password });
       if (res.success) {
+        toast.success('Signed in successfully');
         onSuccess({ userId: res.userId, token: res.token, profile: res.profile });
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid password');
+      const message = err.message || 'Invalid password';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -68,10 +76,13 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
     try {
       const res = await authApi.verifyOtp({ phone, otp });
       if (res.success) {
+        toast.success('Signed in successfully');
         onSuccess({ userId: res.userId, token: res.token, profile: res.profile });
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid OTP');
+      const message = err.message || 'Invalid OTP';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -83,8 +94,11 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
     try {
       const res = await authApi.sendOtp({ phone });
       setDevOtp(res.otp || '');
+      setEmailPreviewUrl(res.emailPreviewUrl || '');
     } catch (err: any) {
-      setError(err.message || 'Failed to resend OTP');
+      const message = err.message || 'Failed to resend OTP';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -126,7 +140,7 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
                   <img key={i} src={src} alt="" className="h-8 w-8 rounded-full border-2 border-white/50 object-cover" />
                 ))}
               </div>
-              <p className="text-xs text-white/70 mt-2">500+ active users on LocalWork</p>
+              <p className="text-xs text-white/70 mt-2">500+ active users on Towntask</p>
             </div>
           </div>
         </div>
@@ -233,7 +247,13 @@ export default function SignInPage({ onSuccess, onGoToSignUp }: SignInPageProps)
                   {devOtp && (
                     <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
                       <p className="text-xs text-amber-600 font-medium">Dev Mode — OTP: <span className="font-mono text-base font-bold text-amber-800">{devOtp}</span></p>
-                      <p className="text-[10px] text-amber-500 mt-1">OTP also sent to your email ✉️</p>
+                      {emailPreviewUrl ? (
+                        <a href={emailPreviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                          <Mail className="h-4 w-4" /> View OTP Email ✉️
+                        </a>
+                      ) : (
+                        <p className="text-[10px] text-amber-500 mt-1">OTP also sent to your email ✉️</p>
+                      )}
                     </div>
                   )}
 

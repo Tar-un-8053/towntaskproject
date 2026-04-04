@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Loader2, Edit, Save, X, Phone, Camera } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function ProfilePage() {
   const { data: profile, isLoading, isError, error } = useGetCallerProfile();
@@ -43,7 +44,7 @@ export default function ProfilePage() {
       });
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to save profile:', error);
+      toast.error('Failed to save profile. Please try again.');
     }
   };
 

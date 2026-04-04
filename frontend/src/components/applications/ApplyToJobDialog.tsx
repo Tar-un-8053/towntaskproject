@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Loader2, Send } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface ApplyToJobDialogProps {
   jobId: string;
@@ -28,9 +29,9 @@ export default function ApplyToJobDialog({ jobId, jobTitle }: ApplyToJobDialogPr
       });
       setCoverLetter('');
       setOpen(false);
+      toast.success('Application submitted successfully');
     } catch (error: any) {
-      console.error('Failed to apply to job:', error);
-      alert(error.message || 'Failed to apply. You may have already applied to this job.');
+      toast.error(error.message || 'Failed to apply. You may have already applied to this job.');
     }
   };
 

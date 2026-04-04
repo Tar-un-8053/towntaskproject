@@ -16,6 +16,7 @@ export const ROUTES = {
   VOLUNTEER_CHOICE: 'volunteer-choice',
   FULL_VERIFICATION: 'full-verification',
   FEEDBACK: 'feedback',
+  CHAT: 'chat',
 } as const;
 
 export function buildJobDetailRoute(jobId: string | number): string {
@@ -84,5 +85,9 @@ export function buildFullVerificationRoute(): string {
 
 export function buildFeedbackRoute(): string {
   return `#/${ROUTES.FEEDBACK}`;
+}
+
+export function buildChatRoute(applicationId?: string): string {
+  return applicationId ? `#/${ROUTES.CHAT}/${applicationId}` : `#/${ROUTES.CHAT}`;
 }
 

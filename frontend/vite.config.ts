@@ -3,19 +3,17 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from 'tailwindcss'
 import autoprefixer from 'autoprefixer'
 import { VitePWA } from 'vite-plugin-pwa'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
   plugins: [
-    basicSsl(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon.svg'],
       manifest: {
-        name: 'LocalWork — Find Local Jobs & Emergency Help',
-        short_name: 'LocalWork',
-        description: 'Find local jobs, post emergencies, connect with community volunteers near you.',
+        name: 'Towntask — Find Local Jobs & Emergency Help',
+        short_name: 'Towntask',
+        description: 'Find local jobs, send emergency alerts, and connect with community volunteers near you.',
         start_url: '/',
         display: 'standalone',
         background_color: '#1e40af',

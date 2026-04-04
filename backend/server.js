@@ -1,14 +1,17 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
+const { Server } = require('socket.io');
 const path = require('path');
 
 // Import Models
 const Profile = require('./models/Profile');
 const Job = require('./models/Job');
 const Application = require('./models/Application');
+const ChatMessage = require('./models/ChatMessage');
 const EmergencyPost = require('./models/EmergencyPost');
 const VolunteerVerification = require('./models/VolunteerVerification');
 const Rating = require('./models/Rating');
@@ -16,16 +19,26 @@ const Feedback = require('./models/Feedback');
 const seedData = require('./seed');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/localwork';
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || '*';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/towntask';
+const corsOrigin = FRONTEND_ORIGIN === '*' ? true : FRONTEND_ORIGIN;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: corsOrigin,
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const io = new Server(server, {
+  cors: {
+    origin: corsOrigin,
+    credentials: true,
+  },
+});
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -48,7 +61,7 @@ async function setupEmail() {
           pass: process.env.EMAIL_PASS,
         },
       });
-      console.log(`📧 Email configured with ${process.env.EMAIL_USER}`);
+      console.info(`📧 Email configured with ${process.env.EMAIL_USER}`);
     } else {
       // Fallback: create Ethereal test account (free, no signup needed)
       const testAccount = await nodemailer.createTestAccount();
@@ -61,25 +74,25 @@ async function setupEmail() {
           pass: testAccount.pass,
         },
       });
-      console.log(`📧 Dev email configured (Ethereal): ${testAccount.user}`);
-      console.log(`📧 View sent emails at: https://ethereal.email/login`);
+      console.info(`📧 Dev email configured (Ethereal): ${testAccount.user}`);
+      console.info(`📧 View sent emails at: https://ethereal.email/login`);
     }
   } catch (err) {
-    console.log('⚠️ Email setup failed, OTP will only be logged to console:', err.message);
+    console.warn('⚠️ Email setup failed, OTP will only be logged to console:', err.message);
   }
 }
 
 async function sendOtpEmail(toEmail, otp, userName) {
-  if (!emailTransporter || !toEmail) return;
+  if (!emailTransporter || !toEmail) return null;
   try {
     const info = await emailTransporter.sendMail({
-      from: '"LocalWork" <noreply@localwork.app>',
+      from: '"Towntask" <noreply@towntask.app>',
       to: toEmail,
       subject: `Your OTP Code: ${otp}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f8fafc; border-radius: 12px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #2563eb; margin: 0; font-size: 24px;">🛡️ LocalWork</h1>
+            <h1 style="color: #2563eb; margin: 0; font-size: 24px;">🛡️ Towntask</h1>
           </div>
           <div style="background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="color: #334155; font-size: 16px;">Hi${userName ? ' ' + userName : ''},</p>
@@ -94,10 +107,16 @@ async function sendOtpEmail(toEmail, otp, userName) {
       `,
     });
     const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) console.log(`📧 OTP email preview: ${previewUrl}`);
-    else console.log(`📧 OTP email sent to ${toEmail}`);
+    if (previewUrl) {
+      console.info(`📧 OTP email preview: ${previewUrl}`);
+      return previewUrl;
+    } else {
+      console.info(`📧 OTP email sent to ${toEmail}`);
+      return 'sent';
+    }
   } catch (err) {
-    console.log(`⚠️ Failed to send OTP email to ${toEmail}:`, err.message);
+    console.warn(`⚠️ Failed to send OTP email to ${toEmail}:`, err.message);
+    return null;
   }
 }
 
@@ -106,17 +125,17 @@ async function sendLoginSuccessEmail(toEmail, userName, loginMethod) {
   try {
     const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     const info = await emailTransporter.sendMail({
-      from: '"LocalWork" <noreply@localwork.app>',
+      from: '"Towntask" <noreply@towntask.app>',
       to: toEmail,
-      subject: '✅ Successful Login — LocalWork',
+      subject: '✅ Successful Login — Towntask',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #f8fafc; border-radius: 12px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #2563eb; margin: 0; font-size: 24px;">🛡️ LocalWork</h1>
+            <h1 style="color: #2563eb; margin: 0; font-size: 24px;">🛡️ Towntask</h1>
           </div>
           <div style="background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="color: #334155; font-size: 16px;">Hi ${userName || 'there'},</p>
-            <p style="color: #334155; font-size: 16px;">You've successfully signed in to your LocalWork account! 🎉</p>
+            <p style="color: #334155; font-size: 16px;">You've successfully signed in to your Towntask account! 🎉</p>
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0;">
               <p style="margin: 0; color: #166534; font-size: 14px;">
                 <strong>✅ Login Details</strong><br/>
@@ -126,15 +145,15 @@ async function sendLoginSuccessEmail(toEmail, userName, loginMethod) {
             </div>
             <p style="color: #64748b; font-size: 14px;">If this wasn't you, please secure your account immediately.</p>
           </div>
-          <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 16px;">Thank you for using LocalWork — Connecting communities, one job at a time.</p>
+          <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 16px;">Thank you for using Towntask — Connecting communities, one job at a time.</p>
         </div>
       `,
     });
     const previewUrl = nodemailer.getTestMessageUrl(info);
-    if (previewUrl) console.log(`📧 Login email preview: ${previewUrl}`);
-    else console.log(`📧 Login success email sent to ${toEmail}`);
+    if (previewUrl) console.info(`📧 Login email preview: ${previewUrl}`);
+    else console.info(`📧 Login success email sent to ${toEmail}`);
   } catch (err) {
-    console.log(`⚠️ Failed to send login email to ${toEmail}:`, err.message);
+    console.warn(`⚠️ Failed to send login email to ${toEmail}:`, err.message);
   }
 }
 
@@ -146,6 +165,129 @@ const otpStore = new Map(); // phone -> { otp, expiresAt, name?, email?, profile
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
+
+function getRequestUserId(req) {
+  return req.headers['x-user-id'] || null;
+}
+
+async function getChatContextForUser(userId, applicationId) {
+  if (!userId || !mongoose.Types.ObjectId.isValid(applicationId)) {
+    return null;
+  }
+
+  const application = await Application.findById(applicationId).lean();
+  if (!application || application.status !== 'accepted') {
+    return null;
+  }
+
+  const job = await Job.findById(application.jobId).lean();
+  if (!job) {
+    return null;
+  }
+
+  const participants = [application.applicant, job.postedBy];
+  if (!participants.includes(userId)) {
+    return null;
+  }
+
+  return {
+    application,
+    job,
+    counterpartId: application.applicant === userId ? job.postedBy : application.applicant,
+  };
+}
+
+async function emitUnreadCount(userId) {
+  if (!userId) return 0;
+  const count = await ChatMessage.countDocuments({
+    receiverId: userId,
+    readBy: { $ne: userId },
+  });
+  io.to(`user:${userId}`).emit('chat_unread_count', { count });
+  return count;
+}
+
+async function createChatMessageForApplication({ userId, applicationId, message }) {
+  const trimmedMessage = (message || '').trim();
+  if (!trimmedMessage) {
+    throw new Error('Message cannot be empty');
+  }
+
+  const context = await getChatContextForUser(userId, applicationId);
+  if (!context) {
+    throw new Error('Chat is only available for accepted proposals');
+  }
+
+  const savedMessage = await ChatMessage.create({
+    applicationId: context.application._id,
+    senderId: userId,
+    receiverId: context.counterpartId,
+    message: trimmedMessage,
+    readBy: [userId],
+  });
+
+  const payload = {
+    _id: savedMessage._id,
+    applicationId: savedMessage.applicationId,
+    senderId: savedMessage.senderId,
+    receiverId: savedMessage.receiverId,
+    message: savedMessage.message,
+    createdAt: savedMessage.createdAt,
+    updatedAt: savedMessage.updatedAt,
+  };
+
+  io.to(`chat:${String(context.application._id)}`).emit('chat_message', payload);
+  await emitUnreadCount(context.counterpartId);
+
+  return payload;
+}
+
+io.use((socket, next) => {
+  const userId = socket.handshake.auth?.userId || socket.handshake.query?.userId;
+  if (!userId || typeof userId !== 'string') {
+    return next(new Error('Authentication required'));
+  }
+  socket.data.userId = userId;
+  return next();
+});
+
+io.on('connection', (socket) => {
+  const userId = socket.data.userId;
+  socket.join(`user:${userId}`);
+  emitUnreadCount(userId).catch(() => null);
+
+  socket.on('join_chat', async ({ applicationId }) => {
+    const context = await getChatContextForUser(userId, applicationId);
+    if (!context) {
+      socket.emit('chat_error', { error: 'You do not have access to this chat' });
+      return;
+    }
+    socket.join(`chat:${String(context.application._id)}`);
+  });
+
+  socket.on('leave_chat', ({ applicationId }) => {
+    if (applicationId) {
+      socket.leave(`chat:${applicationId}`);
+    }
+  });
+
+  socket.on('send_message', async ({ applicationId, message }, ack) => {
+    try {
+      const payload = await createChatMessageForApplication({
+        userId,
+        applicationId,
+        message,
+      });
+      if (typeof ack === 'function') {
+        ack({ success: true, message: payload });
+      }
+    } catch (err) {
+      if (typeof ack === 'function') {
+        ack({ success: false, error: err.message || 'Failed to send message' });
+      }
+    }
+  });
+});
 
 // ===== AUTH ROUTES =====
 
@@ -164,7 +306,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
       expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
     });
 
-    console.log(`📱 OTP for ${phone}: ${otp}`);
+    console.info(`📱 OTP for ${phone}: ${otp}`);
 
     // Check if user has email on file
     const existingProfile = await Profile.findOne({ phone });
@@ -173,8 +315,9 @@ app.post('/api/auth/send-otp', async (req, res) => {
     const maskedEmail = userEmail ? userEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3') : null;
 
     // Send OTP via email
+    let emailPreviewUrl = null;
     if (userEmail) {
-      sendOtpEmail(userEmail, otp, existingProfile?.name);
+      emailPreviewUrl = await sendOtpEmail(userEmail, otp, existingProfile?.name);
     }
 
     res.json({
@@ -182,6 +325,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
       message: `OTP sent to ${maskedPhone}${maskedEmail ? ' and ' + maskedEmail : ''}`,
       sentTo: { phone: maskedPhone, email: maskedEmail },
       ...(process.env.NODE_ENV !== 'production' && { otp }),
+      ...(emailPreviewUrl && emailPreviewUrl !== 'sent' && { emailPreviewUrl }),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -221,6 +365,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
           email: stored.email || '',
           phone,
           area: stored.area || '',
+          city: stored.area || '',
           profileType: stored.profileType || 'worker',
           password: hashedPassword,
         },
@@ -277,14 +422,15 @@ app.post('/api/auth/signup', async (req, res) => {
       password,
     });
 
-    console.log(`📱 Signup OTP for ${phone}: ${otp}`);
+    console.info(`📱 Signup OTP for ${phone}: ${otp}`);
 
     const maskedPhone = phone.slice(0, 2) + '****' + phone.slice(-4);
     const maskedEmail = email ? email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : null;
 
     // Send OTP via email
+    let emailPreviewUrl = null;
     if (email) {
-      sendOtpEmail(email, otp, name);
+      emailPreviewUrl = await sendOtpEmail(email, otp, name);
     }
 
     res.json({
@@ -292,6 +438,7 @@ app.post('/api/auth/signup', async (req, res) => {
       message: `OTP sent to ${maskedPhone}${maskedEmail ? ' and ' + maskedEmail : ''}`,
       sentTo: { phone: maskedPhone, email: maskedEmail },
       ...(process.env.NODE_ENV !== 'production' && { otp }),
+      ...(emailPreviewUrl && emailPreviewUrl !== 'sent' && { emailPreviewUrl }),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -317,14 +464,15 @@ app.post('/api/auth/signin', async (req, res) => {
       expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
-    console.log(`📱 Signin OTP for ${phone}: ${otp}`);
+    console.info(`📱 Signin OTP for ${phone}: ${otp}`);
 
     const maskedPhone = phone.slice(0, 2) + '****' + phone.slice(-4);
     const maskedEmail = profile.email ? profile.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') : null;
 
     // Send OTP via email
+    let emailPreviewUrl = null;
     if (profile.email) {
-      sendOtpEmail(profile.email, otp, profile.name);
+      emailPreviewUrl = await sendOtpEmail(profile.email, otp, profile.name);
     }
 
     res.json({
@@ -333,6 +481,7 @@ app.post('/api/auth/signin', async (req, res) => {
       message: `OTP sent to ${maskedPhone}${maskedEmail ? ' and ' + maskedEmail : ''}`,
       sentTo: { phone: maskedPhone, email: maskedEmail },
       ...(process.env.NODE_ENV !== 'production' && { otp }),
+      ...(emailPreviewUrl && emailPreviewUrl !== 'sent' && { emailPreviewUrl }),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -429,9 +578,14 @@ app.get('/api/profile/:principal', async (req, res) => {
 app.post('/api/profile', async (req, res) => {
   try {
     const userId = req.headers['x-user-id'] || 'user-1';
+    const payload = { ...req.body, userId };
+    if (!payload.city && payload.area) {
+      payload.city = payload.area;
+    }
+
     const profile = await Profile.findOneAndUpdate(
       { userId },
-      { ...req.body, userId },
+      payload,
       { upsert: true, new: true, runValidators: true }
     );
     res.json({ success: true, profile });
@@ -476,8 +630,18 @@ app.post('/api/jobs', async (req, res) => {
       return res.status(403).json({ error: 'Only providers can create jobs' });
     }
 
+    const normalizedArea = (req.body.area || '').trim();
+    const normalizedCity = (req.body.city || normalizedArea).trim();
+    const normalizedSkills = Array.isArray(req.body.skills)
+      ? req.body.skills.filter((skill) => typeof skill === 'string' && skill.trim()).map((skill) => skill.trim())
+      : [];
+
     const job = await Job.create({
       ...req.body,
+      area: normalizedArea,
+      city: normalizedCity,
+      state: req.body.state || normalizedCity || 'Unknown',
+      skills: normalizedSkills,
       postedBy: userId,
       status: 'open',
       salary: req.body.salary || null,
@@ -502,12 +666,23 @@ app.get('/api/jobs', async (req, res) => {
 // Search jobs
 app.get('/api/jobs/search', async (req, res) => {
   try {
-    const { area, title, category, state } = req.query;
+    const { area, city, title, category, skills, state } = req.query;
     const filter = {};
 
     if (area) filter.area = { $regex: area, $options: 'i' };
+    if (city) filter.city = { $regex: city, $options: 'i' };
     if (title) filter.title = { $regex: title, $options: 'i' };
     if (category) filter.category = { $regex: category, $options: 'i' };
+    if (skills) {
+      const skillList = String(skills)
+        .split(',')
+        .map((skill) => skill.trim())
+        .filter(Boolean)
+        .map((skill) => new RegExp(skill, 'i'));
+      if (skillList.length > 0) {
+        filter.skills = { $in: skillList };
+      }
+    }
     if (state) filter.state = { $regex: `^${state}$`, $options: 'i' };
 
     const jobs = await Job.find(filter).sort({ createdAt: -1 });
@@ -674,7 +849,12 @@ app.put('/api/applications/:id/status', async (req, res) => {
     const job = await Job.findById(application.jobId);
     if (!job || job.postedBy !== userId) return res.status(403).json({ error: 'Only job owner can update status' });
 
-    application.status = req.body.status;
+    const nextStatus = req.body.status;
+    if (!['pending', 'accepted', 'rejected'].includes(nextStatus)) {
+      return res.status(400).json({ error: 'Invalid status value' });
+    }
+
+    application.status = nextStatus;
     await application.save();
 
     res.json({ success: true, application });
@@ -694,6 +874,178 @@ app.get('/api/jobs/:id/applications', async (req, res) => {
 
     const applications = await Application.find({ jobId: job._id });
     res.json({ applications });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== CHAT ROUTES =====
+
+app.get('/api/chat/unread-count', async (req, res) => {
+  try {
+    const userId = getRequestUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const count = await ChatMessage.countDocuments({
+      receiverId: userId,
+      readBy: { $ne: userId },
+    });
+
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chat/conversations', async (req, res) => {
+  try {
+    const userId = getRequestUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const myJobs = await Job.find({ postedBy: userId }).select('_id').lean();
+    const myJobIds = myJobs.map((job) => job._id);
+
+    const applications = await Application.find({
+      status: 'accepted',
+      $or: [{ applicant: userId }, { jobId: { $in: myJobIds } }],
+    })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const jobsById = new Map();
+    const counterpartIds = new Set();
+
+    if (applications.length > 0) {
+      const appJobIds = [...new Set(applications.map((a) => String(a.jobId)))];
+      const jobs = await Job.find({ _id: { $in: appJobIds } })
+        .select('_id title area city state postedBy')
+        .lean();
+      jobs.forEach((job) => jobsById.set(String(job._id), job));
+    }
+
+    const conversations = await Promise.all(
+      applications.map(async (application) => {
+        const applicationId = String(application._id);
+        const job = jobsById.get(String(application.jobId));
+        if (!job) return null;
+
+        const counterpartId = application.applicant === userId ? job.postedBy : application.applicant;
+        counterpartIds.add(counterpartId);
+
+        const [lastMessage, unreadCount] = await Promise.all([
+          ChatMessage.findOne({ applicationId: application._id }).sort({ createdAt: -1 }).lean(),
+          ChatMessage.countDocuments({
+            applicationId: application._id,
+            receiverId: userId,
+            readBy: { $ne: userId },
+          }),
+        ]);
+
+        return {
+          applicationId,
+          counterpartId,
+          job: {
+            _id: job._id,
+            title: job.title,
+            area: job.area,
+            city: job.city,
+            state: job.state,
+          },
+          unreadCount,
+          lastMessage: lastMessage
+            ? {
+                _id: lastMessage._id,
+                senderId: lastMessage.senderId,
+                message: lastMessage.message,
+                createdAt: lastMessage.createdAt,
+              }
+            : null,
+          updatedAt: lastMessage?.createdAt || application.updatedAt,
+        };
+      })
+    );
+
+    const compactConversations = conversations.filter(Boolean);
+    const profiles = await Profile.find({ userId: { $in: [...counterpartIds] } })
+      .select('userId name profileType')
+      .lean();
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    res.json({
+      conversations: compactConversations
+        .map((conversation) => ({
+          ...conversation,
+          counterpart: profileMap.get(conversation.counterpartId) || {
+            userId: conversation.counterpartId,
+            name: 'Towntask User',
+            profileType: 'worker',
+          },
+        }))
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/chat/:applicationId/messages', async (req, res) => {
+  try {
+    const userId = getRequestUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const context = await getChatContextForUser(userId, req.params.applicationId);
+    if (!context) {
+      return res.status(403).json({ error: 'Chat is only available for accepted proposals' });
+    }
+
+    const messages = await ChatMessage.find({ applicationId: context.application._id })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/chat/:applicationId/messages', async (req, res) => {
+  try {
+    const userId = getRequestUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const payload = await createChatMessageForApplication({
+      userId,
+      applicationId: req.params.applicationId,
+      message: req.body.message,
+    });
+
+    res.json({ success: true, message: payload });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to send message' });
+  }
+});
+
+app.post('/api/chat/:applicationId/read', async (req, res) => {
+  try {
+    const userId = getRequestUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+    const context = await getChatContextForUser(userId, req.params.applicationId);
+    if (!context) {
+      return res.status(403).json({ error: 'Chat is only available for accepted proposals' });
+    }
+
+    await ChatMessage.updateMany(
+      {
+        applicationId: context.application._id,
+        receiverId: userId,
+        readBy: { $ne: userId },
+      },
+      { $addToSet: { readBy: userId } }
+    );
+
+    const count = await emitUnreadCount(userId);
+    res.json({ success: true, unreadCount: count });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -817,7 +1169,7 @@ app.post('/api/providers/smart-search', async (req, res) => {
 // Create high emergency
 app.post('/api/emergency/high', async (req, res) => {
   try {
-    const userId = req.headers['x-user-id'];
+    const userId = getRequestUserId(req);
     if (!userId) return res.status(401).json({ error: 'Authentication required' });
 
     const profile = await Profile.findOne({ userId });
@@ -829,36 +1181,26 @@ app.post('/api/emergency/high', async (req, res) => {
       return res.status(403).json({ error: `Account suspended until ${profile.suspendedUntil.toLocaleDateString()}` });
     }
 
-    // Check usage limits
-    const now = new Date();
-    const resetDate = new Date(profile.emergencyUsageResetDate || 0);
-    const daysSinceReset = (now - resetDate) / (1000 * 60 * 60 * 24);
-    if (daysSinceReset > 30) {
-      profile.emergencyUsageCount = 0;
-      profile.emergencyUsageResetDate = now;
-      await profile.save();
-    }
-
-    const maxEmergencies = profile.isVerified ? 10 : 1;
-    if (profile.emergencyUsageCount >= maxEmergencies) {
-      const limitMsg = profile.isVerified
-        ? 'You have reached your limit of 10 high emergencies per month.'
-        : 'Normal users can post 1 high emergency per 30 days. Get verified for more.';
-      return res.status(429).json({ error: limitMsg });
-    }
-
     const { category, description, lat, lng, disclaimerAccepted } = req.body;
+    const allowedCategories = ['crime', 'medical', 'women_safety', 'other', 'personal_safety', 'vehicle_breakdown', 'civil_help'];
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    const normalizedDescription = (description || '').trim();
 
-    if (!category || !description || !lat || !lng) {
-      return res.status(400).json({ error: 'Category, description, and location are required.' });
+    if (!allowedCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid emergency category' });
     }
-    if (!disclaimerAccepted) {
-      return res.status(400).json({ error: 'You must accept the disclaimer before posting.' });
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+      return res.status(400).json({ error: 'Valid location coordinates are required.' });
+    }
+    if (category === 'other' && normalizedDescription.length < 5) {
+      return res.status(400).json({ error: 'Please add a short description for Other emergencies.' });
     }
 
     // Basic content moderation
     const bannedWords = ['fake', 'test', 'prank', 'joke', 'lol', 'fun'];
-    const descLower = description.toLowerCase();
+    const finalDescription = normalizedDescription || `Emergency category selected: ${String(category).replace('_', ' ')}`;
+    const descLower = finalDescription.toLowerCase();
     if (bannedWords.some(w => descLower.includes(w))) {
       return res.status(400).json({ error: 'Your description contains inappropriate content. Emergency system is for real emergencies only.' });
     }
@@ -867,29 +1209,25 @@ app.post('/api/emergency/high', async (req, res) => {
       userId,
       type: 'high',
       category,
-      description,
-      lat,
-      lng,
-      location: { type: 'Point', coordinates: [lng, lat] },
+      description: finalDescription,
+      lat: parsedLat,
+      lng: parsedLng,
+      location: { type: 'Point', coordinates: [parsedLng, parsedLat] },
       status: 'OPEN',
       currentRadius: 20,
-      disclaimerAccepted,
+      disclaimerAccepted: disclaimerAccepted ?? true,
       broadcastHistory: [{ radius: 20, sentAt: new Date(), notifiedCount: 0 }],
     });
-
-    // Increment usage
-    profile.emergencyUsageCount += 1;
-    await profile.save();
 
     // Find nearby verified volunteers
     const nearbyVolunteers = await Profile.find({
       isVolunteer: true,
-      volunteerStatus: 'verified',
+      volunteerStatus: 'VERIFIED',
       volunteerAvailable: true,
       userId: { $ne: userId },
       location: {
         $nearSphere: {
-          $geometry: { type: 'Point', coordinates: [lng, lat] },
+          $geometry: { type: 'Point', coordinates: [parsedLng, parsedLat] },
           $maxDistance: 20000, // 20km
         },
       },
@@ -899,7 +1237,7 @@ app.post('/api/emergency/high', async (req, res) => {
       success: true,
       emergency,
       notifiedVolunteers: nearbyVolunteers.length,
-      message: `Emergency posted! ${nearbyVolunteers.length} volunteers notified within 20 km.`,
+      message: `Emergency sent! ${nearbyVolunteers.length} volunteers were notified nearby.`,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -923,7 +1261,7 @@ app.put('/api/emergency/:id/expand', async (req, res) => {
     // Find newly reachable volunteers
     const volunteers = await Profile.find({
       isVolunteer: true,
-      volunteerStatus: 'verified',
+      volunteerStatus: 'VERIFIED',
       volunteerAvailable: true,
       userId: { $ne: emergency.userId },
       location: {
@@ -1394,7 +1732,7 @@ app.post('/api/volunteer/send-verification-otp', async (req, res) => {
       expiresAt: Date.now() + 5 * 60 * 1000,
     });
 
-    console.log(`📱 Verification OTP for ${target}: ${otp}`);
+    console.info(`📱 Verification OTP for ${target}: ${otp}`);
 
     res.json({
       success: true,
@@ -1906,13 +2244,14 @@ app.get('/api/profile/:principal/full', async (req, res) => {
 // Health check
 app.get('/', (req, res) => {
   res.json({
-    message: 'LocalWork Backend API',
+    message: 'Towntask Backend API',
     status: 'running',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     endpoints: {
       profiles: '/api/profile',
       jobs: '/api/jobs',
       applications: '/api/applications',
+      chat: '/api/chat',
       emergencies: '/api/emergencies',
       volunteer: '/api/volunteer',
       ratings: '/api/ratings',
@@ -1930,12 +2269,9 @@ app.use((err, req, res, next) => {
 // ===== CONNECT TO MONGODB & START SERVER =====
 const startServer = async () => {
   try {
-    console.log(`🔌 Connecting to MongoDB at ${MONGO_URI}...`);
+    console.info(`🔌 Connecting to MongoDB at ${MONGO_URI}...`);
     await mongoose.connect(MONGO_URI);
-    console.log('✅ MongoDB connected successfully!');
-
-    // Seed sample data if DB is empty
-    await seedData();
+    console.info('✅ MongoDB connected successfully!');
 
     const net = require('net');
     const tester = net.createServer();
@@ -1949,11 +2285,11 @@ const startServer = async () => {
     });
     tester.once('listening', () => {
       tester.close(() => {
-        app.listen(PORT, '0.0.0.0', () => {
-          console.log(`✅ Server running on port ${PORT}`);
-          console.log(`📍 API: http://localhost:${PORT}`);
-          console.log(`🌐 LAN: http://0.0.0.0:${PORT} (accessible from phone)`);
-          console.log(`🗄️  DB:  ${MONGO_URI}`);
+        server.listen(PORT, '0.0.0.0', () => {
+          console.info(`✅ Server running on port ${PORT}`);
+          console.info(`📍 API: http://localhost:${PORT}`);
+          console.info(`🌐 LAN: http://0.0.0.0:${PORT} (accessible from phone)`);
+          console.info(`🗄️  DB:  ${MONGO_URI}`);
         });
       });
     });

@@ -100,7 +100,7 @@ export default function LandingPage() {
       name: 'Ravi Kumar',
       role: 'Electrician – Delhi',
       avatar: 'https://i.pravatar.cc/80?img=11',
-      text: 'LocalWork helped me find consistent jobs in my neighbourhood. My income doubled in just 3 months!',
+      text: 'Towntask helped me find consistent jobs in my neighbourhood. My income doubled in just 3 months!',
     },
     {
       name: 'Priya Sharma',
@@ -126,7 +126,7 @@ export default function LandingPage() {
       {/* ======================== NAVBAR ======================== */}
       <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <span className="text-xl font-extrabold tracking-tight gradient-text">LocalWork</span>
+          <span className="text-xl font-extrabold tracking-tight gradient-text">Towntask</span>
           <div className="flex items-center gap-3">
             <a href={buildSignInRoute()} className="text-sm font-medium text-foreground hover:text-primary transition-colors">Sign In</a>
             <Button size="sm" onClick={() => { window.location.hash = buildSignUpRoute(); }}>Sign Up Free</Button>
@@ -459,7 +459,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-12">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-3">
-              <span className="text-lg font-extrabold gradient-text">LocalWork</span>
+              <span className="text-lg font-extrabold gradient-text">Towntask</span>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 India's growing platform for hyper-local jobs. Connecting workers and providers in your neighbourhood.
               </p>
@@ -494,7 +494,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t pt-6 sm:flex-row">
-            <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} LocalWork. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Towntask. All rights reserved.</p>
             <div className="flex gap-4 text-xs text-muted-foreground">
               <span className="hover:text-foreground cursor-pointer">Privacy</span>
               <span className="hover:text-foreground cursor-pointer">Terms</span>

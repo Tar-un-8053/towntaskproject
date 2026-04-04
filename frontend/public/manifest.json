@@ -1,7 +1,7 @@
 {
-  "name": "LocalWork — Find Local Jobs & Emergency Help",
-  "short_name": "LocalWork",
-  "description": "Find local jobs, post emergencies, connect with community volunteers near you.",
+  "name": "Towntask — Find Local Jobs & Emergency Help",
+  "short_name": "Towntask",
+  "description": "Find local jobs, send emergency alerts, and connect with community volunteers near you.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e40af",

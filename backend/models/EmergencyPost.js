@@ -7,7 +7,7 @@ const emergencyPostSchema = new mongoose.Schema({
   // High emergency categories
   category: {
     type: String,
-    enum: ['crime', 'medical', 'personal_safety', 'vehicle_breakdown', 'civil_help', 'other',
+    enum: ['crime', 'medical', 'women_safety', 'personal_safety', 'vehicle_breakdown', 'civil_help', 'other',
            // Light emergency categories
            'tutor', 'plumber', 'electrician', 'mechanic', 'doctor', 'general_service'],
     required: true,

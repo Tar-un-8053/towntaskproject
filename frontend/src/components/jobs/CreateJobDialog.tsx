@@ -6,6 +6,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Plus, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function CreateJobDialog() {
   const [open, setOpen] = useState(false);
@@ -32,8 +33,9 @@ export default function CreateJobDialog() {
       setArea('');
       setDescription('');
       setOpen(false);
+      toast.success('Job posted successfully');
     } catch (error) {
-      console.error('Failed to create job:', error);
+      toast.error('Failed to create job. Please try again.');
     }
   };
 

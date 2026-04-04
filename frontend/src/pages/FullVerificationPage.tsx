@@ -8,6 +8,7 @@ import {
   MapPin, CheckCircle2, Upload, AlertTriangle, CreditCard, User as UserIcon
 } from 'lucide-react';
 import { volunteerApi } from '../services/api';
+import { toast } from 'react-toastify';
 
 interface FullVerificationPageProps {
   onComplete: () => void;
@@ -15,6 +16,7 @@ interface FullVerificationPageProps {
 }
 
 type VerificationStep = 'terms' | 'aadhaar' | 'pan' | 'selfie' | 'address' | 'declaration' | 'complete';
+type UploadKey = 'aadhaarFront' | 'aadhaarBack' | 'panImage';
 
 export default function FullVerificationPage({ onComplete, onBack }: FullVerificationPageProps) {
   const [step, setStep] = useState<VerificationStep>('terms');
@@ -38,6 +40,12 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
   const [panNumber, setPanNumber] = useState('');
   const [nameOnPan, setNameOnPan] = useState('');
   const [panImage, setPanImage] = useState('');
+  const [uploadingKey, setUploadingKey] = useState<UploadKey | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<Record<UploadKey, number>>({
+    aadhaarFront: 0,
+    aadhaarBack: 0,
+    panImage: 0,
+  });
 
   // Selfie
   const [selfieUrl, setSelfieUrl] = useState('');
@@ -56,6 +64,7 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
 
   const allSteps: VerificationStep[] = ['terms', 'aadhaar', 'pan', 'selfie', 'address', 'declaration', 'complete'];
   const stepIndex = allSteps.indexOf(step);
+  const progressPercent = Math.round((stepIndex / (allSteps.length - 1)) * 100);
 
   const handleTermsSubmit = async () => {
     if (!termsAccepted || !codeOfConduct || !riskAcknowledged) {
@@ -67,7 +76,9 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
       await volunteerApi.register({ termsAccepted, codeOfConductAccepted: codeOfConduct, riskAcknowledged });
       setStep('aadhaar');
     } catch (err: any) {
-      setError(err.message || 'Failed to start registration');
+      const message = err.message || 'Failed to start registration';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -79,21 +90,49 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
     setTimeout(() => {
       setDigilockerVerified(true);
       setNameOnAadhaar('Verified via DigiLocker');
-      setAadhaarNumber('999988887777'); // Simulated
+      setAadhaarNumber('999988887777');
       setLoading(false);
+      toast.success('DigiLocker verification completed');
     }, 2000);
   };
 
-  // Mock file upload — returns a data URL
-  const handleFileUpload = (setter: (val: string) => void) => {
+  const handleFileUpload = (key: UploadKey, setter: (val: string) => void) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/*,application/pdf';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
+        const allowedTypes = ['application/pdf'];
+        const isImage = file.type.startsWith('image/');
+        const isPdf = allowedTypes.includes(file.type);
+        if (!isImage && !isPdf) {
+          setError('Only PDF and image files are supported.');
+          toast.error('Only PDF and image files are supported');
+          return;
+        }
+
+        setUploadingKey(key);
+        setUploadProgress((prev) => ({ ...prev, [key]: 0 }));
+
         const reader = new FileReader();
-        reader.onload = () => setter(reader.result as string);
+        reader.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+          setUploadProgress((prev) => ({ ...prev, [key]: percent }));
+        };
+        reader.onload = () => {
+          setter(reader.result as string);
+          setUploadProgress((prev) => ({ ...prev, [key]: 100 }));
+          setUploadingKey(null);
+          toast.success(`${file.name} uploaded`);
+        };
+        reader.onerror = () => {
+          setUploadingKey(null);
+          setUploadProgress((prev) => ({ ...prev, [key]: 0 }));
+          setError('Upload failed. Please try again.');
+          toast.error('Upload failed. Please try again.');
+        };
         reader.readAsDataURL(file);
       }
     };
@@ -201,9 +240,12 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
         declarationAccepted,
         digilockerVerified,
       });
+      toast.success('Documents uploaded successfully');
       setStep('complete');
     } catch (err: any) {
-      setError(err.message || 'Submission failed');
+      const message = err.message || 'Submission failed';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -239,14 +281,13 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Step {stepIndex + 1} of {allSteps.length - 1}</span>
-                  <span>{Math.round((stepIndex / (allSteps.length - 1)) * 100)}%</span>
+                  <span>{progressPercent}%</span>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500"
-                    style={{ width: `${(stepIndex / (allSteps.length - 1)) * 100}%` }}
-                  />
-                </div>
+                <progress
+                  className="h-2 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-gradient-to-r [&::-webkit-progress-value]:from-orange-500 [&::-webkit-progress-value]:to-red-500"
+                  value={progressPercent}
+                  max={100}
+                />
               </div>
             )}
 
@@ -392,24 +433,48 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
                 {aadhaarMethod === 'upload' && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs">Aadhaar Front *</Label>
-                      <button onClick={() => handleFileUpload(setAadhaarFront)}
+                      <Label className="text-xs">Aadhaar Front (PDF/Image) *</Label>
+                      <button onClick={() => handleFileUpload('aadhaarFront', setAadhaarFront)}
+                        disabled={uploadingKey === 'aadhaarFront'}
                         className={`mt-1 w-full h-24 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-xs transition-colors ${
                           aadhaarFront ? 'border-green-400 bg-green-50' : 'border-border hover:border-primary/50'
                         }`}>
-                        {aadhaarFront ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : <Upload className="h-5 w-5 text-muted-foreground" />}
+                        {uploadingKey === 'aadhaarFront'
+                          ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                          : aadhaarFront
+                            ? <CheckCircle2 className="h-6 w-6 text-green-500" />
+                            : <Upload className="h-5 w-5 text-muted-foreground" />}
                         <span className="mt-1 text-muted-foreground">{aadhaarFront ? 'Uploaded' : 'Upload'}</span>
                       </button>
+                      {uploadProgress.aadhaarFront > 0 && uploadProgress.aadhaarFront < 100 && (
+                        <progress
+                          className="mt-1 h-1.5 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary"
+                          value={uploadProgress.aadhaarFront}
+                          max={100}
+                        />
+                      )}
                     </div>
                     <div>
-                      <Label className="text-xs">Aadhaar Back *</Label>
-                      <button onClick={() => handleFileUpload(setAadhaarBack)}
+                      <Label className="text-xs">Aadhaar Back (PDF/Image) *</Label>
+                      <button onClick={() => handleFileUpload('aadhaarBack', setAadhaarBack)}
+                        disabled={uploadingKey === 'aadhaarBack'}
                         className={`mt-1 w-full h-24 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-xs transition-colors ${
                           aadhaarBack ? 'border-green-400 bg-green-50' : 'border-border hover:border-primary/50'
                         }`}>
-                        {aadhaarBack ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : <Upload className="h-5 w-5 text-muted-foreground" />}
+                        {uploadingKey === 'aadhaarBack'
+                          ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                          : aadhaarBack
+                            ? <CheckCircle2 className="h-6 w-6 text-green-500" />
+                            : <Upload className="h-5 w-5 text-muted-foreground" />}
                         <span className="mt-1 text-muted-foreground">{aadhaarBack ? 'Uploaded' : 'Upload'}</span>
                       </button>
+                      {uploadProgress.aadhaarBack > 0 && uploadProgress.aadhaarBack < 100 && (
+                        <progress
+                          className="mt-1 h-1.5 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary"
+                          value={uploadProgress.aadhaarBack}
+                          max={100}
+                        />
+                      )}
                     </div>
                   </div>
                 )}
@@ -444,14 +509,26 @@ export default function FullVerificationPage({ onComplete, onBack }: FullVerific
                 </div>
 
                 <div>
-                  <Label className="text-xs">PAN Card Image *</Label>
-                  <button onClick={() => handleFileUpload(setPanImage)}
+                  <Label className="text-xs">PAN Card (PDF/Image) *</Label>
+                  <button onClick={() => handleFileUpload('panImage', setPanImage)}
+                    disabled={uploadingKey === 'panImage'}
                     className={`mt-1 w-full h-28 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-xs transition-colors ${
                       panImage ? 'border-green-400 bg-green-50' : 'border-border hover:border-primary/50'
                     }`}>
-                    {panImage ? <CheckCircle2 className="h-6 w-6 text-green-500" /> : <Upload className="h-5 w-5 text-muted-foreground" />}
+                    {uploadingKey === 'panImage'
+                      ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      : panImage
+                        ? <CheckCircle2 className="h-6 w-6 text-green-500" />
+                        : <Upload className="h-5 w-5 text-muted-foreground" />}
                     <span className="mt-1 text-muted-foreground">{panImage ? 'PAN card uploaded' : 'Upload PAN card image'}</span>
                   </button>
+                  {uploadProgress.panImage > 0 && uploadProgress.panImage < 100 && (
+                    <progress
+                      className="mt-1 h-1.5 w-full overflow-hidden rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary"
+                      value={uploadProgress.panImage}
+                      max={100}
+                    />
+                  )}
                 </div>
 
                 <Button onClick={handlePanNext} className="w-full h-11 bg-gradient-to-r from-orange-500 to-red-500">

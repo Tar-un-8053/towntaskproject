@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function ProfileSetupDialog() {
   const [name, setName] = useState('');
@@ -27,7 +28,7 @@ export default function ProfileSetupDialog() {
         profileType: profileType,
       });
     } catch (error) {
-      console.error('Failed to save profile:', error);
+      toast.error('Failed to save profile. Please try again.');
     }
   };
 
@@ -38,13 +39,13 @@ export default function ProfileSetupDialog() {
       <div className="w-full max-w-4xl relative animate-fade-in-up grid lg:grid-cols-5 overflow-hidden rounded-2xl shadow-xl border bg-card">
         {/* Left side — illustration panel */}
         <div className="hidden lg:flex lg:col-span-2 relative bg-gradient-to-br from-primary/90 to-primary flex-col items-center justify-center p-8 text-white">
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=900&fit=crop&q=80')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
+          <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=900&fit=crop&q=80')] bg-cover bg-center" />
           <div className="relative z-10 space-y-6 text-center">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
               <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=160&h=160&fit=crop&q=80" alt="Team" className="h-16 w-16 rounded-full object-cover ring-2 ring-white/50" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Join LocalWork</h2>
+              <h2 className="text-2xl font-bold">Join Towntask</h2>
               <p className="mt-2 text-sm text-white/80 leading-relaxed">Connect with local opportunities and grow your career in your neighbourhood.</p>
             </div>
             <div className="space-y-3 text-left">
@@ -69,7 +70,7 @@ export default function ProfileSetupDialog() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 mb-2">
             <span className="text-2xl">👋</span>
           </div>
-          <CardTitle className="text-2xl">Welcome to LocalWork!</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Towntask!</CardTitle>
           <CardDescription>Let's set up your profile to get started</CardDescription>
         </CardHeader>
         <CardContent>

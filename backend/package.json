@@ -4,11 +4,12 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mongoose": "^9.2.1",
-    "nodemailer": "^8.0.1"
+    "nodemailer": "^8.0.1",
+    "socket.io": "^4.8.3"
   },
   "name": "backend",
   "version": "1.0.0",
-  "description": "LocalWork Backend API",
+  "description": "Towntask Backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

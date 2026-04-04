@@ -6,6 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Loader2, ArrowLeft, Phone, MapPin, User as UserIcon, Mail, Briefcase, Lock, Eye, EyeOff } from 'lucide-react';
 import { authApi } from '../services/api';
+import { toast } from 'react-toastify';
 
 interface SignUpPageProps {
   onSuccess: (data: { userId: string; token: string; profile: any; isNewUser?: boolean }) => void;
@@ -24,6 +25,7 @@ export default function SignUpPage({ onSuccess, onGoToSignIn }: SignUpPageProps)
   const [area, setArea] = useState('');
   const [profileType, setProfileType] = useState<'worker' | 'provider'>('worker');
   const [devOtp, setDevOtp] = useState('');
+  const [emailPreviewUrl, setEmailPreviewUrl] = useState('');
   const [sentTo, setSentTo] = useState<{ phone?: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,10 +46,13 @@ export default function SignUpPage({ onSuccess, onGoToSignIn }: SignUpPageProps)
     try {
       const res = await authApi.signup({ name, phone, email, area, profileType, password });
       setDevOtp(res.otp || '');
+      setEmailPreviewUrl(res.emailPreviewUrl || '');
       if (res.sentTo) setSentTo(res.sentTo);
       setStep('otp');
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP');
+      const message = err.message || 'Failed to send OTP';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -59,10 +64,13 @@ export default function SignUpPage({ onSuccess, onGoToSignIn }: SignUpPageProps)
     try {
       const res = await authApi.verifyOtp({ phone, otp });
       if (res.success) {
+        toast.success('Account created successfully');
         onSuccess({ userId: res.userId, token: res.token, profile: res.profile, isNewUser: res.isNewUser });
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid OTP');
+      const message = err.message || 'Invalid OTP';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -74,9 +82,12 @@ export default function SignUpPage({ onSuccess, onGoToSignIn }: SignUpPageProps)
     try {
       const res = await authApi.sendOtp({ phone });
       setDevOtp(res.otp || '');
+      setEmailPreviewUrl(res.emailPreviewUrl || '');
       setError('');
     } catch (err: any) {
-      setError(err.message || 'Failed to resend OTP');
+      const message = err.message || 'Failed to resend OTP';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -96,7 +107,7 @@ export default function SignUpPage({ onSuccess, onGoToSignIn }: SignUpPageProps)
               <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=160&h=160&fit=crop&q=80" alt="Team" className="h-16 w-16 rounded-full object-cover ring-2 ring-white/50" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Join LocalWork</h2>
+              <h2 className="text-2xl font-bold">Join Towntask</h2>
               <p className="mt-2 text-sm text-white/80 leading-relaxed">Create your free account and start finding local opportunities today.</p>
             </div>
             <div className="space-y-3 text-left">
@@ -318,7 +329,13 @@ export default function SignUpPage({ onSuccess, onGoToSignIn }: SignUpPageProps)
                   {devOtp && (
                     <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
                       <p className="text-xs text-amber-600 font-medium">Dev Mode — OTP: <span className="font-mono text-base font-bold text-amber-800">{devOtp}</span></p>
-                      <p className="text-[10px] text-amber-500 mt-1">OTP also sent to your email ✉️</p>
+                      {emailPreviewUrl ? (
+                        <a href={emailPreviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                          <Mail className="h-4 w-4" /> View OTP Email ✉️
+                        </a>
+                      ) : (
+                        <p className="text-[10px] text-amber-500 mt-1">OTP also sent to your email ✉️</p>
+                      )}
                     </div>
                   )}
 

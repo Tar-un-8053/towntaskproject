@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { volunteerApi } from '../services/api';
 import { buildFullVerificationRoute } from '../router/routes';
+import { toast } from 'react-toastify';
 import {
   Shield, CheckCircle, FileText, Camera, Phone, Mail, Loader2,
   AlertTriangle, Award, Star, ToggleLeft, ToggleRight, ChevronDown, ChevronUp, Lock,
@@ -77,7 +78,7 @@ export default function VolunteerPage() {
   const handleFileSelect = (setter: (val: string) => void) => {
     // In production, use file upload to S3/CloudStorage
     // For now, simulate with a placeholder URL
-    setter(`https://secure-storage.localwork.app/docs/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`);
+    setter(`https://secure-storage.towntask.app/docs/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`);
   };
 
   const handleSubmitDocuments = async () => {
@@ -124,7 +125,7 @@ export default function VolunteerPage() {
       const res = await volunteerApi.toggleAvailability();
       setStatus({ ...status, volunteerAvailable: res.volunteerAvailable });
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to update availability');
     }
   };
 

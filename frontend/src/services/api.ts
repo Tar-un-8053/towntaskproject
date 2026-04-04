@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Helper to get user ID from localStorage
 const getUserId = () => {
-  const authData = localStorage.getItem('localwork_auth');
+  const authData = localStorage.getItem('towntask_auth');
   if (authData) {
     try {
       return JSON.parse(authData).userId;
@@ -26,9 +26,7 @@ if (!localStorage.getItem('userId')) {
 async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const userId = getUserId();
-  
-  console.log(`API Request: ${options.method || 'GET'} ${url}`);
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -42,18 +40,11 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error(`API Error: ${response.status} ${response.statusText} for ${url}`);
       throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
     }
 
     return data;
   } catch (error: any) {
-    if (error.message && !error.message.startsWith('HTTP')) {
-      // Re-throw parsed error messages
-      if (error instanceof TypeError) {
-        console.error(`Fetch error for ${url}:`, error);
-      }
-    }
     throw error;
   }
 }
@@ -144,7 +135,7 @@ export const smartSearchApi = {
 // Emergency APIs
 export const emergencyApi = {
   createHighEmergency: (data: {
-    category: string; description: string; lat: number; lng: number; disclaimerAccepted: boolean;
+    category: string; description?: string; lat: number; lng: number; disclaimerAccepted?: boolean;
   }) => apiFetch('/api/emergency/high', { method: 'POST', body: JSON.stringify(data) }),
   createLightEmergency: (data: {
     category: string; description: string; lat?: number; lng?: number; urgencyLevel: string;
@@ -237,4 +228,20 @@ export const jobDetailApi = {
 // Full profile with feedback & stats
 export const fullProfileApi = {
   getFullProfile: (userId: string) => apiFetch(`/api/profile/${userId}/full`),
+};
+
+// Chat APIs
+export const chatApi = {
+  getUnreadCount: () => apiFetch('/api/chat/unread-count'),
+  getConversations: () => apiFetch('/api/chat/conversations'),
+  getMessages: (applicationId: string) => apiFetch(`/api/chat/${applicationId}/messages`),
+  sendMessage: (applicationId: string, message: string) =>
+    apiFetch(`/api/chat/${applicationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    }),
+  markAsRead: (applicationId: string) =>
+    apiFetch(`/api/chat/${applicationId}/read`, {
+      method: 'POST',
+    }),
 };

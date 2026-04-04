@@ -1,7 +1,7 @@
 {
-  "name": "localwork-app",
+  "name": "towntask-app",
   "version": "1.0.0",
-  "description": "LocalWork — Full Stack MERN App",
+  "description": "Towntask — Full Stack MERN App",
   "scripts": {
     "install-all": "cd backend && npm install && cd ../frontend && npm install --legacy-peer-deps",
     "build": "cd frontend && npm run build",

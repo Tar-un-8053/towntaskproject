@@ -13,7 +13,7 @@ export default function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Briefcase className="h-4 w-4" />
               </div>
-              <span className="font-bold text-lg gradient-text">LocalWork</span>
+              <span className="font-bold text-lg gradient-text">Towntask</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Connecting local talent with nearby opportunities. Find work in your neighborhood.
@@ -41,7 +41,7 @@ export default function Footer() {
 
           {/* Stats look */}
           <div className="space-y-3">
-            <h4 className="font-semibold text-sm">Why LocalWork?</h4>
+            <h4 className="font-semibold text-sm">Why Towntask?</h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-primary/5 p-3 text-center">
                 <div className="text-lg font-bold text-primary">100%</div>
@@ -60,7 +60,7 @@ export default function Footer() {
             <p className="flex items-center gap-1.5">
               Made with <Heart className="h-3.5 w-3.5 fill-red-500 text-red-500 animate-pulse" /> in India
             </p>
-            <p>&copy; {currentYear} LocalWork. All rights reserved.</p>
+            <p>&copy; {currentYear} Towntask. All rights reserved.</p>
           </div>
         </div>
       </div>

@@ -42,7 +42,7 @@ export function InternetIdentityProvider({ children }: InternetIdentityProviderP
   useEffect(() => {
     const checkExistingSession = async () => {
       try {
-        const saved = localStorage.getItem('localwork_auth');
+        const saved = localStorage.getItem('towntask_auth');
         if (saved) {
           const data = JSON.parse(saved) as AuthData;
           setAuthData(data);
@@ -51,8 +51,7 @@ export function InternetIdentityProvider({ children }: InternetIdentityProviderP
           localStorage.setItem('userId', data.userId);
         }
       } catch (error) {
-        console.error('Error checking session:', error);
-        localStorage.removeItem('localwork_auth');
+        localStorage.removeItem('towntask_auth');
       } finally {
         setIsInitializing(false);
       }
@@ -63,7 +62,7 @@ export function InternetIdentityProvider({ children }: InternetIdentityProviderP
 
   const loginWithAuth = useCallback((data: { userId: string; token: string; profile?: any }) => {
     const auth: AuthData = { userId: data.userId, token: data.token };
-    localStorage.setItem('localwork_auth', JSON.stringify(auth));
+    localStorage.setItem('towntask_auth', JSON.stringify(auth));
     localStorage.setItem('userId', data.userId);
     setAuthData(auth);
     setIdentity({} as Identity);
@@ -79,7 +78,6 @@ export function InternetIdentityProvider({ children }: InternetIdentityProviderP
       localStorage.setItem('internetIdentity', 'mock');
       setLoginStatus('idle');
     } catch (error) {
-      console.error('Login error:', error);
       setLoginStatus('error');
       throw error;
     }
@@ -88,7 +86,7 @@ export function InternetIdentityProvider({ children }: InternetIdentityProviderP
   const clear = useCallback(async () => {
     setIdentity(null);
     setAuthData(null);
-    localStorage.removeItem('localwork_auth');
+    localStorage.removeItem('towntask_auth');
     localStorage.removeItem('internetIdentity');
     localStorage.removeItem('userId');
   }, []);

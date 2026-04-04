@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { emergencyApi, ratingApi, volunteerApi } from '../services/api';
 import { buildEmergencyRoute, buildVolunteerRoute } from '../router/routes';
 import InstantVerificationDialog from '../components/common/InstantVerificationDialog';
+import { toast } from 'react-toastify';
 import {
   AlertTriangle, Clock, MapPin, CheckCircle, User, Star, Loader2,
   Shield, ChevronRight, XCircle, Flag, RefreshCw, Heart,
@@ -31,7 +32,7 @@ export default function MyEmergenciesPage() {
     loadEmergencies();
     // Load user phone/email from auth data
     try {
-      const authData = localStorage.getItem('localwork_auth');
+      const authData = localStorage.getItem('towntask_auth');
       if (authData) {
         const parsed = JSON.parse(authData);
         setUserPhone(parsed.profile?.phone || '');
@@ -45,8 +46,8 @@ export default function MyEmergenciesPage() {
       setLoading(true);
       const res = await emergencyApi.getMyEmergencies();
       setEmergencies(res.emergencies || []);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to load emergencies');
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export default function MyEmergenciesPage() {
       await emergencyApi.resolveEmergency(id);
       await loadEmergencies();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to resolve emergency');
     }
   };
 
@@ -66,14 +67,14 @@ export default function MyEmergenciesPage() {
       await emergencyApi.expandRadius(id);
       await loadEmergencies();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to expand emergency radius');
     }
   };
 
   const handleAccept = async (id: string) => {
     try {
       const res = await emergencyApi.acceptEmergency(id);
-      alert(`Exact location: ${res.exactLocation.lat}, ${res.exactLocation.lng}`);
+      toast.success(`Emergency accepted. Exact location: ${res.exactLocation.lat}, ${res.exactLocation.lng}`);
       await loadEmergencies();
     } catch (err: any) {
       // Check if requires instant verification
@@ -88,7 +89,7 @@ export default function MyEmergenciesPage() {
             return;
           }
           if (status.volunteerStatus === 'TEMP_VERIFIED' && status.tempEmergencyCount >= 2) {
-            alert('Temp verified limit reached (2/2). Complete full verification for unlimited access.');
+            toast.info('Temp verified limit reached (2/2). Complete full verification for unlimited access.');
             window.location.hash = buildVolunteerRoute();
             return;
           }
@@ -99,7 +100,7 @@ export default function MyEmergenciesPage() {
           return;
         }
       }
-      alert(err.message);
+      toast.error(err?.message || 'Failed to accept emergency');
     }
   };
 
@@ -109,10 +110,10 @@ export default function MyEmergenciesPage() {
       // Retry accept after instant verification
       try {
         const res = await emergencyApi.acceptEmergency(pendingAcceptId);
-        alert(`Verified & accepted! Location: ${res.exactLocation.lat}, ${res.exactLocation.lng}`);
+        toast.success(`Verified and accepted. Location: ${res.exactLocation.lat}, ${res.exactLocation.lng}`);
         await loadEmergencies();
       } catch (err: any) {
-        alert(err.message);
+        toast.error(err?.message || 'Failed to accept emergency');
       }
       setPendingAcceptId(null);
     }
@@ -123,7 +124,7 @@ export default function MyEmergenciesPage() {
       await emergencyApi.cancelVolunteer(id);
       await loadEmergencies();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to cancel volunteer assignment');
     }
   };
 
@@ -133,7 +134,7 @@ export default function MyEmergenciesPage() {
       await emergencyApi.reportFake(id);
       await loadEmergencies();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to report emergency');
     }
   };
 
@@ -150,9 +151,9 @@ export default function MyEmergenciesPage() {
       });
       setRatingModal(null);
       setReviewText('');
-      alert('Rating submitted!');
+      toast.success('Rating submitted!');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err?.message || 'Failed to submit rating');
     } finally {
       setRatingSubmitting(false);
     }

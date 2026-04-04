@@ -4,7 +4,9 @@ const jobSchema = new mongoose.Schema({
   title: { type: String, required: true },
   category: { type: String, required: true },
   area: { type: String, required: true },
+  city: { type: String, default: '' },
   state: { type: String, required: true },
+  skills: [{ type: String }],
   description: { type: String, required: true },
   salary: { type: String },
   postedBy: { type: String, required: true },
@@ -21,8 +23,11 @@ const jobSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Enable text search on title, category, area, state
-jobSchema.index({ title: 'text', category: 'text', area: 'text', state: 'text' });
+jobSchema.index({ title: 'text', category: 'text', area: 'text', city: 'text', state: 'text', skills: 'text' });
 jobSchema.index({ state: 1 });
+jobSchema.index({ city: 1 });
+jobSchema.index({ skills: 1 });
+jobSchema.index({ city: 1, skills: 1 });
 jobSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Job', jobSchema);

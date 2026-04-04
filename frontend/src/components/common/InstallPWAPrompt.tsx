@@ -73,7 +73,7 @@ export default function InstallPWAPrompt() {
                 <Smartphone className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Install LocalWork App</p>
+                <p className="font-semibold text-gray-900 text-sm">Install Towntask App</p>
                 <p className="text-xs text-gray-500">Add to your Home Screen</p>
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function InstallPWAPrompt() {
               <Download className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Install LocalWork App</p>
+              <p className="font-semibold text-gray-900 text-sm">Install Towntask App</p>
               <p className="text-xs text-gray-500">Fast access from home screen</p>
             </div>
           </div>

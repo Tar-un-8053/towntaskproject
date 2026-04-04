@@ -5,11 +5,11 @@ const seedData = async () => {
   // Check if data already exists
   const jobCount = await Job.countDocuments();
   if (jobCount > 0) {
-    console.log(`📦 Database already has ${jobCount} jobs — skipping seed`);
+    console.info(`📦 Database already has ${jobCount} jobs — skipping seed`);
     return;
   }
 
-  console.log('🌱 Seeding database with sample data...');
+  console.info('🌱 Seeding database with sample data...');
 
   // Sample providers
   const providers = [
@@ -87,7 +87,7 @@ const seedData = async () => {
     });
   }
 
-  console.log(`📦 Seeded ${sampleJobs.length} jobs and ${providers.length + workers.length} profiles into MongoDB`);
+  console.info(`📦 Seeded ${sampleJobs.length} jobs and ${providers.length + workers.length} profiles into MongoDB`);
 };
 
 module.exports = seedData;

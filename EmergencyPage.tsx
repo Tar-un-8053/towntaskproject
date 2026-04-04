@@ -1,4 +1,4 @@
-﻿import { AlertTriangle, PhoneCall, ShieldAlert, HeartPulse, Siren, HelpCircle } from 'lucide-react';
+import { AlertTriangle, PhoneCall, ShieldAlert, HeartPulse, Siren, HelpCircle } from 'lucide-react';
 
 const QUICK_CATEGORIES = [
   { id: 'crime', label: 'Crime', helpline: '100', icon: ShieldAlert, color: 'text-red-600' },
