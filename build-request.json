@@ -1,0 +1,154 @@
+{
+  "kind": "build_request",
+  "title": "Local job matching platform: profiles, job postings, and area-based matching",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement Internet Identity sign-in and use the authenticated Principal as the account identifier for all user-owned data (profiles, job postings, and applications/matches).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "You asked for a location‑based platform that connects local workers with nearby job providers. We’ll build a simplified version that lets users create profiles, post jobs, and match with workers, using Motoko and React without external map or GPS services."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can sign in/out with Internet Identity in the UI.",
+        "Backend endpoints that create/update data associate records with caller Principal.",
+        "Users cannot edit or delete other users’ profiles or job postings."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add worker and job-provider profile management: create, view, and edit basic profile information, including an area field (e.g., city/region/postcode) used for local matching (no GPS/maps).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "...lets users create profiles... without external map or GPS services."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A signed-in user can create a profile selecting role: Worker or Provider.",
+        "Profile includes at minimum: display name, role, area (free-text), optional bio/contact (non-sensitive, e.g., email/phone as plain text).",
+        "A user can view and edit their own profile.",
+        "Other users can view a public read-only version of a profile (no edit controls)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement job posting functionality for Providers: create, view, edit, close/reopen, and delete job listings; each job includes title, description, area, category/tags, and status.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "...job providers post jobs..."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Only Provider-role accounts can create job listings.",
+        "Providers can edit/close/delete only their own jobs.",
+        "Workers can browse open jobs and view job details.",
+        "Job list supports filtering by area and category/tags (basic UI filters)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement an area-based matching flow between Workers and Jobs without external map/GPS: workers can apply to jobs; providers can review applicants and accept/reject; the system highlights ‘local’ matches when worker area and job area match (exact match or simple normalized match).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "...match with workers... without external map or GPS services."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A Worker can apply to an open job once; duplicate applications are prevented.",
+        "A Provider can view a list of applicants for each job and see each applicant’s public profile info and area.",
+        "A Provider can accept or reject an application; the application status is visible to both parties.",
+        "UI indicates when an application is considered ‘local’ based on area matching rules used by the backend."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Persist all core data in the Motoko canister (profiles, jobs, applications) and expose a minimal, typed API to the frontend for CRUD operations and queries (lists/detail views), following the single-actor backend constraint.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "...using Motoko and React..."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Data remains available across canister upgrades using stable storage patterns appropriate for Motoko.",
+        "Backend exposes query methods for lists/details and update methods for create/edit/state changes.",
+        "All methods enforce authorization checks based on caller Principal and profile role."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Create a coherent, consistent UI theme for the app (colors, typography, spacing, and component styling) suitable for a local marketplace, and apply it across all pages (avoid blue/purple as the primary palette).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "try again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The UI uses a consistent non-blue/purple primary palette (e.g., warm neutrals with an accent).",
+        "Core screens share consistent layout, navigation, and typography.",
+        "Shadcn/Tailwind styling is applied consistently (no unstyled default blocks)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Build the main frontend screens and navigation: landing/browse jobs, authentication entry, profile (view/edit), provider job management, job detail + apply, provider applicant review, and worker application status.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "...create profiles, post jobs, and match with workers..."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can navigate between: Browse Jobs, My Profile, and a role-appropriate dashboard (Provider: My Jobs; Worker: My Applications).",
+        "Job detail page includes an Apply action for Workers and applicant management for the owning Provider.",
+        "All API interactions use React Query for loading/error states and cache invalidation after mutations."
+      ]
+    }
+  ],
+  "constraints": [
+    "Use Motoko for backend logic in a single main actor (no multi-canister/microservices).",
+    "Do not use external databases or third-party auth providers; only Internet Identity is allowed.",
+    "Do not use external map/GPS/location services; matching must use user-entered area text.",
+    "Do not modify files under frontend/src/components/ui or other immutable paths listed in SYSTEM_CONTEXT; compose them instead.",
+    "Use English for any user-facing text."
+  ],
+  "nonGoals": [
+    "Real-time chat or messaging between workers and providers.",
+    "GPS-based distance calculations, maps, or geocoding.",
+    "Payments, subscriptions, or escrow.",
+    "Email/SMS notifications or push notifications.",
+    "Complex ranking/recommendation algorithms beyond simple area-based highlighting."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

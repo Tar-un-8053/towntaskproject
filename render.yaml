@@ -1,0 +1,12 @@
+services:
+  # Backend + Frontend (Single Service - Free Tier)
+  - type: web
+    name: localwork-app
+    runtime: node
+    buildCommand: "cd backend && npm install && cd ../frontend && npm install --legacy-peer-deps --include=dev && npm run build"
+    startCommand: "cd backend && NODE_ENV=production node server.js"
+    envVars:
+      - key: MONGO_URI
+        sync: false  # Set manually in Render dashboard
+      - key: FRONTEND_URL
+        sync: false  # Set to your deployed Render URL

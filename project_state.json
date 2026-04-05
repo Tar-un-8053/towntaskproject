@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Location-based platform connecting local workers with nearby job providers (simplified): users create profiles, job providers post jobs, and the system matches workers to jobs. Tech stack: Motoko backend + React frontend; no external map/GPS services.",
+  "architectural_notes": [
+    "Use Motoko for backend canisters and React for the frontend.",
+    "Avoid external map/GPS services; implement simplified locality/nearby logic without third-party geolocation APIs."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-implement-internet-identity-sign-in-and-use-the-authenticated-principal-as-the-account-identifier-for-all-user-owned-data-profiles-job-postings-and-applications-matches",
+      "title": "Implement Internet Identity sign-in and use the authenticated Principal as the account identifier for all user-owned data (profiles, job postings, and applications/matches).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-worker-and-job-provider-profile-management-create-view-and-edit-basic-profile-information-including-an-area-field-e-g-city-region-postcode-used-for-local-matching-no-gps-maps",
+      "title": "Add worker and job-provider profile management: create, view, and edit basic profile information, including an area field (e.g., city/region/postcode) used for local matching (no GPS/maps).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-job-posting-functionality-for-providers-create-view-edit-close-reopen-and-delete-job-listings-each-job-includes-title-description-area-category-tags-and-status",
+      "title": "Implement job posting functionality for Providers: create, view, edit, close/reopen, and delete job listings; each job includes title, description, area, category/tags, and status.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-an-area-based-matching-flow-between-workers-and-jobs-without-external-map-gps-workers-can-apply-to-jobs-providers-can-review-applicants-and-accept-reject-the-system-highlights-local-matches-when-worker-area-and-job-area-match-exact-match-or-simple-normalized-match",
+      "title": "Implement an area-based matching flow between Workers and Jobs without external map/GPS: workers can apply to jobs; providers can review applicants and accept/reject; the system highlights ‘local’ matches when worker area and job area match (exact match or simple normalized match).",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-coherent-consistent-ui-theme-for-the-app-colors-typography-spacing-and-component-styling-suitable-for-a-local-marketplace-and-apply-it-across-all-pages-avoid-blue-purple-as-the-primary-palette",
+      "title": "Create a coherent, consistent UI theme for the app (colors, typography, spacing, and component styling) suitable for a local marketplace, and apply it across all pages (avoid blue/purple as the primary palette).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-the-main-frontend-screens-and-navigation-landing-browse-jobs-authentication-entry-profile-view-edit-provider-job-management-job-detail-apply-provider-applicant-review-and-worker-application-status",
+      "title": "Build the main frontend screens and navigation: landing/browse jobs, authentication entry, profile (view/edit), provider job management, job detail + apply, provider applicant review, and worker application status.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "User profiles for workers and job providers (create/view/edit basic profile info)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Job posting functionality for providers (create/view/manage job listings)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Matching flow between job listings and workers (nearby/local matching without external map/GPS services)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Motoko backend + React frontend implementation constraint",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Persist all core data in the Motoko canister (profiles, jobs, applications) and expose a minimal, typed API to the frontend for CRUD operations and queries (lists/detail views), following the single-actor backend constraint.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Local job matching platform: profiles, job postings, and area-based matching",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

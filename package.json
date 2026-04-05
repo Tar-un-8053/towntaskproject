@@ -1,0 +1,14 @@
+{
+  "name": "towntask-app",
+  "version": "1.0.0",
+  "description": "Towntask — Full Stack MERN App",
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install --legacy-peer-deps",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && node server.js",
+    "dev": "echo 'Run backend and frontend separately'"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

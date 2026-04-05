@@ -1,0 +1,138 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-implement-internet-identity-sign-in-and-use-the-authenticated-principal-as-the-account-identifier-for-all-user-owned-data-profiles-job-postings-and-applications-matches",
+      "featureTitle": "Implement Internet Identity sign-in and use the authenticated Principal as the account identifier for all user-owned data (profiles, job postings, and applications/matches).",
+      "files": [
+        "frontend/src/components/auth/LoginButton.tsx",
+        "frontend/src/hooks/queries/useCallerContext.ts",
+        "frontend/src/hooks/useBackend.ts",
+        "frontend/src/main.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-worker-and-job-provider-profile-management-create-view-and-edit-basic-profile-information-including-an-area-field-e-g-city-region-postcode-used-for-local-matching-no-gps-maps",
+      "featureTitle": "Add worker and job-provider profile management: create, view, and edit basic profile information, including an area field (e.g., city/region/postcode) used for local matching (no GPS/maps).",
+      "files": [
+        "frontend/src/components/profile/ProfileCard.tsx",
+        "frontend/src/hooks/queries/useProfiles.ts",
+        "frontend/src/pages/ProfilePage.tsx",
+        "frontend/src/pages/PublicProfilePage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-job-posting-functionality-for-providers-create-view-edit-close-reopen-and-delete-job-listings-each-job-includes-title-description-area-category-tags-and-status",
+      "featureTitle": "Implement job posting functionality for Providers: create, view, edit, close/reopen, and delete job listings; each job includes title, description, area, category/tags, and status.",
+      "files": [
+        "frontend/src/components/jobs/JobCard.tsx",
+        "frontend/src/hooks/queries/useJobs.ts",
+        "frontend/src/pages/BrowseJobsPage.tsx",
+        "frontend/src/pages/JobDetailPage.tsx",
+        "frontend/src/pages/ProviderJobsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-an-area-based-matching-flow-between-workers-and-jobs-without-external-map-gps-workers-can-apply-to-jobs-providers-can-review-applicants-and-accept-reject-the-system-highlights-local-matches-when-worker-area-and-job-area-match-exact-match-or-simple-normalized-match",
+      "featureTitle": "Implement an area-based matching flow between Workers and Jobs without external map/GPS: workers can apply to jobs; providers can review applicants and accept/reject; the system highlights ‘local’ matches when worker area and job area match (exact match or simple normalized match).",
+      "files": [
+        "frontend/src/components/applications/ApplyToJobDialog.tsx",
+        "frontend/src/hooks/queries/useApplications.ts",
+        "frontend/src/pages/MyApplicationsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-a-coherent-consistent-ui-theme-for-the-app-colors-typography-spacing-and-component-styling-suitable-for-a-local-marketplace-and-apply-it-across-all-pages-avoid-blue-purple-as-the-primary-palette",
+      "featureTitle": "Create a coherent, consistent UI theme for the app (colors, typography, spacing, and component styling) suitable for a local marketplace, and apply it across all pages (avoid blue/purple as the primary palette).",
+      "files": [
+        "frontend/index.css",
+        "frontend/src/components/layout/AppLayout.tsx",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-the-main-frontend-screens-and-navigation-landing-browse-jobs-authentication-entry-profile-view-edit-provider-job-management-job-detail-apply-provider-applicant-review-and-worker-application-status",
+      "featureTitle": "Build the main frontend screens and navigation: landing/browse jobs, authentication entry, profile (view/edit), provider job management, job detail + apply, provider applicant review, and worker application status.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/common/QueryState.tsx",
+        "frontend/src/components/layout/TopNav.tsx",
+        "frontend/src/pages/NotFoundPage.tsx",
+        "frontend/src/router/routes.ts",
+        "frontend/src/router/useHashRouter.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

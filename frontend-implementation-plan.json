@@ -1,0 +1,226 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Local job matching platform frontend (profiles, jobs, applications, area-based matching)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add Internet Identity sign-in/out UI and use authenticated Principal context for all user-owned views and mutations.",
+      "acceptanceCriteria": [
+        "Users can sign in/out with Internet Identity in the UI.",
+        "Backend endpoints that create/update data associate records with caller Principal.",
+        "Users cannot edit or delete other users’ profiles or job postings."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Fix global stylesheet import to correctly load the Tailwind base styles from frontend/index.css and ensure auth + React Query providers wrap the app for authenticated flows."
+        },
+        {
+          "path": "frontend/src/components/auth/LoginButton.tsx",
+          "operation": "create",
+          "description": "Create a Login/Logout button using the Internet Identity flow from the selected \"authorization\" component; clear React Query cache on logout. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/AuthRequired.tsx",
+          "operation": "create",
+          "description": "Add an auth guard wrapper that blocks application data screens unless the user is signed in (treat anonymous as guest), showing a friendly sign-in call-to-action. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useBackend.ts",
+          "operation": "create",
+          "description": "Add a thin hook that composes useActor() and returns a ready actor plus a stable \"isAuthenticated\" flag (based on Internet Identity) for screens to gate queries/mutations. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/queries/useCallerContext.ts",
+          "operation": "create",
+          "description": "Implement React Query hooks to fetch the caller role and caller profile (getCallerUserRole/getCallerProfile) and expose loading/error states for top-level navigation decisions. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Implement worker/provider profile create/view/edit flows, including a free-text area field used for matching, plus public read-only profile viewing.",
+      "acceptanceCriteria": [
+        "A signed-in user can create a profile selecting role: Worker or Provider.",
+        "Profile includes at minimum: display name, role, area (free-text), optional bio/contact (non-sensitive, e.g., email/phone as plain text).",
+        "A user can view and edit their own profile.",
+        "Other users can view a public read-only version of a profile (no edit controls)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Extend the typed frontend backend interface and data types to include any profile fields required by the UI (e.g., optional bio/contact) and any missing read methods needed for public profile viewing; keep types aligned with actual backend capabilities."
+        },
+        {
+          "path": "frontend/src/hooks/queries/useProfiles.ts",
+          "operation": "create",
+          "description": "Create React Query hooks for profile operations: getCallerProfile, saveCallerProfile, and getProfile(public) with proper cache keys and invalidation after mutations."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "create",
+          "description": "Create the 'My Profile' screen with create/edit form (display name, role Worker/Provider, area, optional bio/contact) and read-only preview; use shadcn-ui components for form controls and consistent layout. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/PublicProfilePage.tsx",
+          "operation": "create",
+          "description": "Create a public read-only profile view page for another user (by principal string in route), with no edit controls; show area and non-sensitive fields only."
+        },
+        {
+          "path": "frontend/src/components/profile/ProfileCard.tsx",
+          "operation": "create",
+          "description": "Add a reusable profile summary card component used in applicant lists and public profile pages; compose shadcn-ui Card/Badge primitives (do not modify ui components). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Implement provider job listing CRUD UI and worker job browsing with filters by area and category/tags; support job status (open/closed).",
+      "acceptanceCriteria": [
+        "Only Provider-role accounts can create job listings.",
+        "Providers can edit/close/delete only their own jobs.",
+        "Workers can browse open jobs and view job details.",
+        "Job list supports filtering by area and category/tags (basic UI filters)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Extend typed backend interface to include missing job capabilities required by the UI (job detail fetch, provider job list, update fields/status, delete), while keeping existing types (Job, SearchParams) consistent."
+        },
+        {
+          "path": "frontend/src/hooks/queries/useJobs.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for job search/list, job detail, and provider mutations (create/update/status/delete) with cache invalidation so lists and details stay in sync."
+        },
+        {
+          "path": "frontend/src/pages/BrowseJobsPage.tsx",
+          "operation": "create",
+          "description": "Build the main browse jobs screen with search/filter UI (area + category/tags + optional title) and a results list; compose shadcn-ui Input/Select/Button/Card for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/JobDetailPage.tsx",
+          "operation": "create",
+          "description": "Create a job detail screen showing title/description/area/category/status and role-appropriate actions (Worker: apply; Provider owner: edit fields, close/reopen, delete, and applicant review panel)."
+        },
+        {
+          "path": "frontend/src/pages/ProviderJobsPage.tsx",
+          "operation": "create",
+          "description": "Create a provider dashboard 'My Jobs' showing the provider’s job listings and a create/edit form; gate access based on caller role (Provider) and hide actions otherwise."
+        },
+        {
+          "path": "frontend/src/components/jobs/JobCard.tsx",
+          "operation": "create",
+          "description": "Add a reusable Job card component for list rendering with status badge and area/category chips; compose shadcn-ui Card/Badge primitives (do not modify ui components). Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Implement worker apply flow and provider applicant review with accept/reject, preventing duplicates and highlighting ‘local’ matches based on backend area normalization rules.",
+      "acceptanceCriteria": [
+        "A Worker can apply to an open job once; duplicate applications are prevented.",
+        "A Provider can view a list of applicants for each job and see each applicant’s public profile info and area.",
+        "A Provider can accept or reject an application; the application status is visible to both parties.",
+        "UI indicates when an application is considered ‘local’ based on area matching rules used by the backend."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Extend typed backend interface to include provider applicant listing per job and a typed way to obtain backend-computed locality for an application (or application+job locality flag), as needed to render the ‘local’ indicator."
+        },
+        {
+          "path": "frontend/src/hooks/queries/useApplications.ts",
+          "operation": "create",
+          "description": "Implement React Query hooks for applyToJob, getMyApplications, provider job applications listing, and updateApplicationStatus (accept/reject), with cache invalidation across job detail + dashboards."
+        },
+        {
+          "path": "frontend/src/components/applications/ApplyToJobDialog.tsx",
+          "operation": "create",
+          "description": "Create an apply dialog (cover letter input + submit) for Workers; disable/replace with status UI if already applied, and surface backend authorization/duplicate errors gracefully using shadcn-ui Dialog/Alert. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/applications/ApplicantsList.tsx",
+          "operation": "create",
+          "description": "Create the provider applicant review list component for a job, showing applicant public profile summary (name/area) and accept/reject controls; include a ‘Local’ badge driven by backend locality result. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/MyApplicationsPage.tsx",
+          "operation": "create",
+          "description": "Create the worker dashboard 'My Applications' showing each application with job reference, current status (pending/accepted/rejected), and a ‘local’ indicator when provided by backend rules."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Apply a consistent, warm neutral marketplace theme (non-blue/purple primary) across all screens using Tailwind/shadcn variables and shared layout styling.",
+      "acceptanceCriteria": [
+        "The UI uses a consistent non-blue/purple primary palette (e.g., warm neutrals with an accent).",
+        "Core screens share consistent layout, navigation, and typography.",
+        "Shadcn/Tailwind styling is applied consistently (no unstyled default blocks)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/index.css",
+          "operation": "modify",
+          "description": "Update CSS variables (e.g., --primary/--accent/--ring and related foregrounds) to a warm neutral + accent palette (avoid blue/purple) while preserving shadcn variable structure."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Adjust theme extensions if needed to support consistent typography/spacing defaults for the marketplace UI (without introducing a blue/purple primary)."
+        },
+        {
+          "path": "frontend/src/components/layout/AppLayout.tsx",
+          "operation": "create",
+          "description": "Create a shared layout wrapper (header/nav + content container) that standardizes spacing and typography; compose shadcn-ui components for nav and consistent styling. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Build the main screens and navigation (browse jobs, auth entry, profile, provider job management, job detail/apply, provider applicant review, worker application status) with React Query for all data interactions.",
+      "acceptanceCriteria": [
+        "Users can navigate between: Browse Jobs, My Profile, and a role-appropriate dashboard (Provider: My Jobs; Worker: My Applications).",
+        "Job detail page includes an Apply action for Workers and applicant management for the owning Provider.",
+        "All API interactions use React Query for loading/error states and cache invalidation after mutations."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the app composition root that wires together AuthRequired, AppLayout, and a simple router to required screens; ensure unauthenticated users see only authentication entry UI."
+        },
+        {
+          "path": "frontend/src/router/useHashRouter.ts",
+          "operation": "create",
+          "description": "Implement a lightweight hash-based router (no external routing dependency) supporting required routes: Browse Jobs, Job Detail, My Profile, Provider My Jobs, Worker My Applications, and Public Profile."
+        },
+        {
+          "path": "frontend/src/router/routes.ts",
+          "operation": "create",
+          "description": "Define route constants/builders (e.g., job detail by id, public profile by principal) to avoid hard-coded strings and ensure consistent navigation wiring."
+        },
+        {
+          "path": "frontend/src/components/layout/TopNav.tsx",
+          "operation": "create",
+          "description": "Implement top navigation links to Browse Jobs, My Profile, and role-appropriate dashboard (Provider: My Jobs; Worker: My Applications), plus LoginButton; hide/disable links appropriately until role/profile is loaded."
+        },
+        {
+          "path": "frontend/src/components/common/QueryState.tsx",
+          "operation": "create",
+          "description": "Add a shared loading/empty/error renderer to keep screens consistent; use it across all React Query powered pages for coherent UX."
+        },
+        {
+          "path": "frontend/src/pages/NotFoundPage.tsx",
+          "operation": "create",
+          "description": "Add a simple not-found screen for unknown hash routes and wire it as the fallback in App.tsx."
+        }
+      ]
+    }
+  ]
+}
