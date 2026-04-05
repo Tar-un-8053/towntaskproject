@@ -2303,7 +2303,8 @@ const startServer = async () => {
 
 // Serve frontend for all non-API routes in production
 if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
+  // Express 5 rejects bare "*" path patterns; use a regex catch-all instead.
+  app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
   });
 }
